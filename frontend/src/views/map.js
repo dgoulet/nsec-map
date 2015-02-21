@@ -50,6 +50,8 @@ var MapView = Marionette.ItemView.extend({
         this.path = d3.geo.path()
             .projection(this.projection);
 
+        this.graticule = d3.geo.graticule();
+
         this.lambda = d3.scale.linear()
             .domain([0, this.width])
             .range([-180, 180]);
@@ -60,10 +62,39 @@ var MapView = Marionette.ItemView.extend({
     },
 
     drawMap: function() {
+        this.svg.append("defs").append("path")
+            .datum({type: "Sphere"})
+            .attr("id", "sphere")
+            .attr("d", this.path);
+
+        this.svg.append("use")
+            .attr("class", "stroke")
+            .attr("xlink:href", "#sphere");
+
+        this.svg.append("use")
+            .attr("class", "fill")
+            .attr("xlink:href", "#sphere");
+
+        this.svg.append("path")
+            .datum(this.graticule)
+            .attr("class", "graticule")
+            .attr("d", this.path);
+
         var onSuccess = _.bind(function(error, world) {
-            this.svg.append("path")
+            this.svg.insert("path", ".graticule")
                 .datum(topojson.feature(world, world.objects.land))
                 .attr("class", "land")
+                .attr("d", this.path);
+
+            this.svg.insert("path", ".graticule")
+                .datum(topojson.mesh(world,
+                                     world.objects.countries,
+                                     function(a, b) {
+                                         return a !== b;
+                                     }
+                                    )
+                      )
+                .attr("class", "boundary")
                 .attr("d", this.path);
         }, this);
 
