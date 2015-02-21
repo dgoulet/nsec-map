@@ -2,7 +2,11 @@ var $ = require("jquery"),
     _ = require("underscore"),
     Marionette = require("backbone.marionette"),
     d3 = require("d3"),
-    topojson = require("topojson");
+    topojson = require("topojson"),
+    // This isn't a proper module, so don't use geoZoom as if it were
+    // Instead requiring the file will add the d3.geo.zoom function to
+    // the existing d3 object
+    geoZoom = require("../utils/d3.geo.zoom");
 
 var MapView = Marionette.ItemView.extend({
     template: false,
@@ -29,6 +33,8 @@ var MapView = Marionette.ItemView.extend({
                         .attr("width", this.svgWidth)
                         .attr("height", this.svgHeight)
                         [0]);
+
+        _.bindAll(this, "zoomRedraw");
     },
 
     onRender: function() {
@@ -96,9 +102,24 @@ var MapView = Marionette.ItemView.extend({
                       )
                 .attr("class", "boundary")
                 .attr("d", this.path);
+
+            // Allow zoom and rotation of map
+            this.svg.selectAll("path")
+                .call(d3.geo.zoom().projection(this.projection)
+                      .scaleExtent([this.projection.scale() * .7,
+                                    this.projection.scale() * 10])
+                      .on("zoom.redraw", this.zoomRedraw));
         }, this);
 
         d3.json("/assets/topo/world-countries.json", onSuccess);
+    },
+
+    zoomRedraw: function() {
+        if (d3.event.sourceEvent.preventDefault) {
+            d3.event.sourceEvent.preventDefault();
+        }
+
+        this.svg.selectAll("path").attr("d", this.path);
     },
 
     setDimensions: function() {
