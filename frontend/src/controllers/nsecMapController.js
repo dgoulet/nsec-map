@@ -1,5 +1,8 @@
 var Backbone = require("backbone"),
     Marionette = require("backbone.marionette"),
+    // Data
+    WorldData = require("../data/worldData"),
+    // Views
     MapView = require("../views/map");
 
 var NsecMapController = Marionette.Controller.extend({
@@ -12,7 +15,13 @@ var NsecMapController = Marionette.Controller.extend({
     },
 
     showMap: function() {
-        NsecMap.map.show(new MapView());
+        this.worldData = new WorldData();
+
+        NsecMap.map.show(new MapView({
+            worldData: this.worldData
+        }));
+
+        this.worldData.fetch();
     }
 });
 

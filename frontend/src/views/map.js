@@ -23,27 +23,19 @@ var MapView = Marionette.ItemView.extend({
         options = options || {}
         this.margin = options.margin || this.margin;
         this.selector = options.selector || ".map";
+        this.world = options.worldData;
 
         this.setDimensions();
-
+        this.replaceElement();
         this.initializeVisualisation();
 
-        this.setElement(d3.select(this.selector)
-                        .append("svg")
-                        .attr("width", this.svgWidth)
-                        .attr("height", this.svgHeight)
-                        [0]);
-
         _.bindAll(this, "zoomRedraw");
+
+        this.listenTo(this.world, "sync", this.drawMap);
     },
 
     onRender: function() {
-        this.svg = d3.select(this.el)
-            .append("g")
-            .attr("transform", "translate(" + this.margin.left +
-                  "," + this.margin.top + ")");
-
-        this.drawMap();
+        this.initMap();
     },
 
     initializeVisualisation: function() {
@@ -67,7 +59,15 @@ var MapView = Marionette.ItemView.extend({
             .range([90, -90]);
     },
 
-    drawMap: function() {
+    handleSync: function() {
+    },
+
+    initMap: function() {
+        this.svg = d3.select(this.el)
+            .append("g")
+            .attr("transform", "translate(" + this.margin.left +
+                  "," + this.margin.top + ")");
+
         this.svg.append("defs").append("path")
             .datum({type: "Sphere"})
             .attr("id", "sphere")
@@ -83,35 +83,34 @@ var MapView = Marionette.ItemView.extend({
 
         this.svg.append("path")
             .datum(this.graticule)
-            .attr("class", "graticule")
-            .attr("d", this.path);
+            .attr("class", "graticule grabbable")
+            .attr("d", this.path)
+    },
 
-        var onSuccess = _.bind(function(error, world) {
-            this.svg.insert("path", ".graticule")
-                .datum(topojson.feature(world, world.objects.land))
-                .attr("class", "land")
-                .attr("d", this.path);
+    drawMap: function() {
+        this.svg.insert("path", ".graticule")
+            .datum(topojson.feature(this.world.data,
+                                    this.world.data.objects.land))
+            .attr("class", "land  grabbable")
+            .attr("d", this.path)
 
-            this.svg.insert("path", ".graticule")
-                .datum(topojson.mesh(world,
-                                     world.objects.countries,
-                                     function(a, b) {
-                                         return a !== b;
-                                     }
-                                    )
-                      )
-                .attr("class", "boundary")
-                .attr("d", this.path);
+        this.svg.insert("path", ".graticule")
+            .datum(topojson.mesh(this.world.data,
+                                 this.world.data.objects.countries,
+                                 function(a, b) {
+                                     return a !== b;
+                                 }
+                                )
+                  )
+            .attr("class", "boundary  grabbable")
+            .attr("d", this.path)
 
-            // Allow zoom and rotation of map
-            this.svg.selectAll("path")
-                .call(d3.geo.zoom().projection(this.projection)
-                      .scaleExtent([this.projection.scale() * .7,
-                                    this.projection.scale() * 10])
-                      .on("zoom.redraw", this.zoomRedraw));
-        }, this);
-
-        d3.json("/assets/topo/world-countries.json", onSuccess);
+        // Allow zoom and rotation of map
+        this.svg.selectAll("path")
+            .call(d3.geo.zoom().projection(this.projection)
+                  .scaleExtent([this.projection.scale() * .7,
+                                this.projection.scale() * 10])
+                  .on("zoom.redraw", this.zoomRedraw));
     },
 
     zoomRedraw: function() {
@@ -128,6 +127,16 @@ var MapView = Marionette.ItemView.extend({
 
         this.width = this.svgWidth - this.margin.left - this.margin.right;
         this.height = this.svgHeight - this.margin.top - this.margin.bottom;
+    },
+
+    // This function replaces the view's el in order to have the right svg
+    // namespace for the d3 visualisations
+    replaceElement: function() {
+        this.setElement(d3.select(this.selector)
+                        .append("svg")
+                        .attr("width", this.svgWidth)
+                        .attr("height", this.svgHeight)
+                        [0]);
     },
 
     getWidth: function() {
