@@ -71,20 +71,25 @@ var MapView = Marionette.ItemView.extend({
         this.svg.append("defs").append("path")
             .datum({type: "Sphere"})
             .attr("id", "sphere")
-            .attr("d", this.path);
+            .attr("class", "globe")
+            .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
 
         this.svg.append("use")
-            .attr("class", "stroke")
-            .attr("xlink:href", "#sphere");
+            .attr("class", "stroke grabbable")
+            .attr("xlink:href", "#sphere")
+            .on("mousedown.grab", this.onMouseGrab);
 
         this.svg.append("use")
-            .attr("class", "fill")
-            .attr("xlink:href", "#sphere");
+            .attr("class", "fill grabbable")
+            .attr("xlink:href", "#sphere")
+            .on("mousedown.grab", this.onMouseGrab);
 
         this.svg.append("path")
             .datum(this.graticule)
             .attr("class", "graticule grabbable")
             .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
     },
 
     drawMap: function() {
@@ -93,6 +98,7 @@ var MapView = Marionette.ItemView.extend({
                                     this.world.data.objects.land))
             .attr("class", "land  grabbable")
             .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
 
         this.svg.insert("path", ".graticule")
             .datum(topojson.mesh(this.world.data,
@@ -104,6 +110,7 @@ var MapView = Marionette.ItemView.extend({
                   )
             .attr("class", "boundary  grabbable")
             .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
 
         // Allow zoom and rotation of map
         this.svg.selectAll("path")
@@ -119,6 +126,16 @@ var MapView = Marionette.ItemView.extend({
         }
 
         this.svg.selectAll("path").attr("d", this.path);
+    },
+
+    onMouseGrab: function() {
+        var path = d3.select(this).classed("grabbed", true);
+        var w = d3.select(window)
+            .on("mouseup.grab." + this.classList,
+                function() {
+                    path.classed("grabbed", false);
+                    w.on("mouseup.grab", null);
+                });
     },
 
     setDimensions: function() {
