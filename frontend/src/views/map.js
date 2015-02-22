@@ -19,6 +19,9 @@ var MapView = Marionette.ItemView.extend({
         left: 20
     },
 
+    zoomMin: 0.7,
+    zoomMax: 5,
+
     initialize: function(options) {
         options = options || {}
         this.margin = options.margin || this.margin;
@@ -114,9 +117,10 @@ var MapView = Marionette.ItemView.extend({
 
         // Allow zoom and rotation of map
         this.svg.selectAll("path")
-            .call(d3.geo.zoom().projection(this.projection)
-                  .scaleExtent([this.projection.scale() * .7,
-                                this.projection.scale() * 10])
+            .call(d3.geo.zoom()
+                  .projection(this.projection)
+                  .scaleExtent([this.projection.scale() * this.zoomMin,
+                                this.projection.scale() * this.zoomMax])
                   .on("zoom.redraw", this.zoomRedraw));
     },
 
