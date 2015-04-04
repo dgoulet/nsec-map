@@ -34,7 +34,10 @@ var MapView = Marionette.ItemView.extend({
                         .attr("height", this.svgHeight)
                         [0]);
 
-        _.bindAll(this, "zoomRedraw");
+        this.resizeMap = _.debounce(this.resizeMap, 250);
+        _.bindAll(this, "zoomRedraw", "resizeMap");
+
+        d3.select(window).on("resize", this.resizeMap);
     },
 
     onRender: function() {
@@ -120,6 +123,28 @@ var MapView = Marionette.ItemView.extend({
         }
 
         this.svg.selectAll("path").attr("d", this.path);
+    },
+
+    resizeMap: function() {
+        if(!this.svgWidth) return;
+        // TODO: verify that the data is actually loaded before
+        // resizing/redrawing. For now the data is loaded in the
+        // drawMap function (which is bad), so it isn't an issue
+        // (which is good).
+
+        this.svg.selectAll("defs").remove();
+        this.svg.selectAll("use").remove();
+        this.svg.selectAll("path").remove();
+
+        this.setDimensions();
+
+        this.$el.attr("width", this.svgWidth);
+        this.$el.attr("height", this.svgHeight);
+
+        // FIXME: keep current globe orientation/zoom level
+        this.initializeVisualisation();
+
+        this.drawMap();
     },
 
     setDimensions: function() {
