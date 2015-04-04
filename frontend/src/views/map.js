@@ -50,24 +50,20 @@ var MapView = Marionette.ItemView.extend({
     },
 
     initializeVisualisation: function() {
-        this.projection = d3.geo.orthographic()
-            .scale(250)
-            .translate([this.width / 2, this.height / 2])
-            .clipAngle(90)
-            .precision(0.1);
+        if(!this.projection) {
+            this.projection = d3.geo.orthographic()
+                .scale(250)
+                .translate([this.width / 2, this.height / 2])
+                .clipAngle(90)
+                .precision(0.1);
+        } else {
+            this.projection.translate([this.width / 2, this.height / 2]);
+        }
 
         this.path = d3.geo.path()
             .projection(this.projection);
 
         this.graticule = d3.geo.graticule();
-
-        this.lambda = d3.scale.linear()
-            .domain([0, this.width])
-            .range([-180, 180]);
-
-        this.phi = d3.scale.linear()
-            .domain([0, this.height])
-            .range([90, -90]);
     },
 
     drawMap: function() {
@@ -141,7 +137,6 @@ var MapView = Marionette.ItemView.extend({
         this.$el.attr("width", this.svgWidth);
         this.$el.attr("height", this.svgHeight);
 
-        // FIXME: keep current globe orientation/zoom level
         this.initializeVisualisation();
 
         this.drawMap();
