@@ -25,9 +25,9 @@
                     projection.scale(view.k = d3.event.scale);
                     var mouse1 = d3.mouse(this),
                         between = rotateBetween(zoomPoint, position(projection, mouse1));
-                    projection.rotate(view.r = eulerFromQuaternion(rotate = between
-                                                                   ? multiply(rotate, between)
-                                                                   : multiply(bank(projection, mouse0, mouse1), rotate)));
+                    projection.rotate(view.r = eulerFromQuaternion(rotate = between ?
+                                                                   multiply(rotate, between) :
+                                                                   multiply(bank(projection, mouse0, mouse1), rotate)));
                     mouse0 = mouse1;
                     zoomed(event.of(this, arguments));
                 });
@@ -76,7 +76,7 @@
                                     i = interpolateBetween(quaternionFromEuler(view.r), quaternionFromEuler(view1.r)),
                                     d = d3.geo.distance(view.r, view1.r),
                                     smooth = d3.interpolateZoom([0, 0, width / view.k], [d, 0, width / view1.k]);
-                                if (duration) transition.duration(duration(smooth.duration * .001)); // see https://github.com/mbostock/d3/pull/2045
+                                if (duration) transition.duration(duration(smooth.duration * 0.001)); // see https://github.com/mbostock/d3/pull/2045
                                 return function(t) {
                                     var uw = smooth(t);
                                     this.__chart__ = view = {r: eulerFromQuaternion(i(uw[0] / d)), k: width / uw[2]};
@@ -104,7 +104,7 @@
         };
 
         function zoomstarted(dispatch) {
-            if (!zooming++) dispatch({type: "zoomstart"});
+            if (!(zooming++)) dispatch({type: "zoomstart"});
         }
 
         function zoomed(dispatch) {
@@ -130,9 +130,9 @@
     }
 
     function quaternionFromEuler(euler) {
-        var λ = .5 * euler[0] * radians,
-            φ = .5 * euler[1] * radians,
-            γ = .5 * euler[2] * radians,
+        var λ = 0.5 * euler[0] * radians,
+            φ = 0.5 * euler[1] * radians,
+            γ = 0.5 * euler[2] * radians,
             sinλ = Math.sin(λ), cosλ = Math.cos(λ),
             sinφ = Math.sin(φ), cosφ = Math.cos(φ),
             sinγ = Math.sin(γ), cosγ = Math.cos(γ);
@@ -159,7 +159,7 @@
         if (!a || !b) return;
         var axis = cross(a, b),
             norm = Math.sqrt(dot(axis, axis)),
-            halfγ = .5 * Math.acos(Math.max(-1, Math.min(1, dot(a, b)))),
+            halfγ = 0.5 * Math.acos(Math.max(-1, Math.min(1, dot(a, b)))),
             k = Math.sin(halfγ) / norm;
         return norm && [Math.cos(halfγ), axis[2] * k, -axis[1] * k, axis[0] * k];
     }
@@ -238,9 +238,10 @@
         // for the duration of the notification.
         dispatch.of = function(thiz, argumentz) {
             return function(e1) {
+                var e0;
+
                 try {
-                    var e0 =
-                        e1.sourceEvent = d3.event;
+                    e0 = e1.sourceEvent = d3.event;
                     e1.target = target;
                     d3.event = e1;
                     dispatch[e1.type].apply(thiz, argumentz);

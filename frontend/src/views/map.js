@@ -3,9 +3,9 @@ var $ = require("jquery"),
     Marionette = require("backbone.marionette"),
     d3 = require("d3"),
     topojson = require("topojson"),
-    // This isn't a proper module, so don't use geoZoom as if it were
-    // Instead requiring the file will add the d3.geo.zoom function to
-    // the existing d3 object
+    // This isn't a proper module, so don't use the geoZoom directly
+    // as if it were. Instead, requiring the file will add the
+    // d3.geo.zoom function to the existing d3 object
     geoZoom = require("../utils/d3.geo.zoom");
 
 var MapView = Marionette.ItemView.extend({
@@ -20,7 +20,7 @@ var MapView = Marionette.ItemView.extend({
     },
 
     initialize: function(options) {
-        options = options || {}
+        options = options || {};
         this.margin = options.margin || this.margin;
         this.selector = options.selector || ".map";
 
@@ -106,7 +106,7 @@ var MapView = Marionette.ItemView.extend({
             // Allow zoom and rotation of map
             this.svg.selectAll("path")
                 .call(d3.geo.zoom().projection(this.projection)
-                      .scaleExtent([this.projection.scale() * .7,
+                      .scaleExtent([this.projection.scale() * 0.7,
                                     this.projection.scale() * 10])
                       .on("zoom.redraw", this.zoomRedraw));
         }, this);
