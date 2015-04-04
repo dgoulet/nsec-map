@@ -19,34 +19,28 @@ var MapView = Marionette.ItemView.extend({
         left: 20
     },
 
+    zoomMin: 0.7,
+    zoomMax: 5,
+
     initialize: function(options) {
         options = options || {};
         this.margin = options.margin || this.margin;
         this.selector = options.selector || ".map";
+        this.world = options.worldData;
 
         this.setDimensions();
-
+        this.replaceElement();
         this.initializeVisualisation();
-
-        this.setElement(d3.select(this.selector)
-                        .append("svg")
-                        .attr("width", this.svgWidth)
-                        .attr("height", this.svgHeight)
-                        [0]);
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
         _.bindAll(this, "zoomRedraw", "resizeMap");
 
+        this.listenTo(this.world, "sync", this.drawMap);
         d3.select(window).on("resize", this.resizeMap);
     },
 
     onRender: function() {
-        this.svg = d3.select(this.el)
-            .append("g")
-            .attr("transform", "translate(" + this.margin.left +
-                  "," + this.margin.top + ")");
-
-        this.drawMap();
+        this.initMap();
     },
 
     initializeVisualisation: function() {
@@ -66,51 +60,63 @@ var MapView = Marionette.ItemView.extend({
         this.graticule = d3.geo.graticule();
     },
 
-    drawMap: function() {
+    initMap: function() {
+        this.svg = d3.select(this.el)
+            .append("g")
+            .attr("transform", "translate(" + this.margin.left +
+                  "," + this.margin.top + ")");
+
         this.svg.append("defs").append("path")
             .datum({type: "Sphere"})
             .attr("id", "sphere")
-            .attr("d", this.path);
+            .attr("class", "globe")
+            .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
 
         this.svg.append("use")
-            .attr("class", "stroke")
-            .attr("xlink:href", "#sphere");
+            .attr("class", "stroke grabbable")
+            .attr("xlink:href", "#sphere")
+            .on("mousedown.grab", this.onMouseGrab);
 
         this.svg.append("use")
-            .attr("class", "fill")
-            .attr("xlink:href", "#sphere");
+            .attr("class", "fill grabbable")
+            .attr("xlink:href", "#sphere")
+            .on("mousedown.grab", this.onMouseGrab);
 
         this.svg.append("path")
             .datum(this.graticule)
-            .attr("class", "graticule")
-            .attr("d", this.path);
+            .attr("class", "graticule grabbable")
+            .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
+    },
 
-        var onSuccess = _.bind(function(error, world) {
-            this.svg.insert("path", ".graticule")
-                .datum(topojson.feature(world, world.objects.land))
-                .attr("class", "land")
-                .attr("d", this.path);
+    drawMap: function() {
+        this.svg.insert("path", ".graticule")
+            .datum(topojson.feature(this.world.data,
+                                    this.world.data.objects.land))
+            .attr("class", "land  grabbable")
+            .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
 
-            this.svg.insert("path", ".graticule")
-                .datum(topojson.mesh(world,
-                                     world.objects.countries,
-                                     function(a, b) {
-                                         return a !== b;
-                                     }
-                                    )
-                      )
-                .attr("class", "boundary")
-                .attr("d", this.path);
+        this.svg.insert("path", ".graticule")
+            .datum(topojson.mesh(this.world.data,
+                                 this.world.data.objects.countries,
+                                 function(a, b) {
+                                     return a !== b;
+                                 }
+                                )
+                  )
+            .attr("class", "boundary  grabbable")
+            .attr("d", this.path)
+            .on("mousedown.grab", this.onMouseGrab);
 
-            // Allow zoom and rotation of map
-            this.svg.selectAll("path")
-                .call(d3.geo.zoom().projection(this.projection)
-                      .scaleExtent([this.projection.scale() * 0.7,
-                                    this.projection.scale() * 10])
-                      .on("zoom.redraw", this.zoomRedraw));
-        }, this);
-
-        d3.json("/assets/topo/world-countries.json", onSuccess);
+        // Allow zoom and rotation of map
+        this.svg.selectAll("path")
+            .call(d3.geo.zoom()
+                  .projection(this.projection)
+                  .scaleExtent([this.projection.scale() * this.zoomMin,
+                                this.projection.scale() * this.zoomMax])
+                  .on("zoom.redraw", this.zoomRedraw));
     },
 
     zoomRedraw: function() {
@@ -142,12 +148,32 @@ var MapView = Marionette.ItemView.extend({
         this.drawMap();
     },
 
+    onMouseGrab: function() {
+        var path = d3.select(this).classed("grabbed", true);
+        var w = d3.select(window)
+            .on("mouseup.grab." + this.classList,
+                function() {
+                    path.classed("grabbed", false);
+                    w.on("mouseup.grab", null);
+                });
+    },
+
     setDimensions: function() {
         this.svgWidth = this.getWidth();
         this.svgHeight = this.getHeight();
 
         this.width = this.svgWidth - this.margin.left - this.margin.right;
         this.height = this.svgHeight - this.margin.top - this.margin.bottom;
+    },
+
+    // This function replaces the view's el in order to have the right svg
+    // namespace for the d3 visualisations
+    replaceElement: function() {
+        this.setElement(d3.select(this.selector)
+                        .append("svg")
+                        .attr("width", this.svgWidth)
+                        .attr("height", this.svgHeight)
+                        [0]);
     },
 
     getWidth: function() {

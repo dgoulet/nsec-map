@@ -1,3 +1,15 @@
+.grabbable {
+    cursor: -webkit-grab;
+    cursor: -moz-grab;
+    cursor: grab;
+}
+
+.grabbed {
+    cursor: -webkit-grabbing;
+    cursor: -moz-grabbing;
+    cursor: grabbing;
+}
+
 .map {
     margin: 0 auto;
     width: 95vw;
