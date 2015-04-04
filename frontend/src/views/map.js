@@ -128,15 +128,9 @@ var MapView = Marionette.ItemView.extend({
     },
 
     resizeMap: function() {
-        if(!this.svgWidth) return;
-        // TODO: verify that the data is actually loaded before
-        // resizing/redrawing. For now the data is loaded in the
-        // drawMap function (which is bad), so it isn't an issue
-        // (which is good).
+        if(!this.svgWidth || !this.world.data) return;
 
-        this.svg.selectAll("defs").remove();
-        this.svg.selectAll("use").remove();
-        this.svg.selectAll("path").remove();
+        this.svg.remove();
 
         this.setDimensions();
 
@@ -144,7 +138,7 @@ var MapView = Marionette.ItemView.extend({
         this.$el.attr("height", this.svgHeight);
 
         this.initializeVisualisation();
-
+        this.initMap();
         this.drawMap();
     },
 
