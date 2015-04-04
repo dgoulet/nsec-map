@@ -27,15 +27,17 @@ var MapView = Marionette.ItemView.extend({
         this.margin = options.margin || this.margin;
         this.selector = options.selector || ".map";
         this.world = options.worldData;
+        this.routers = options.routersData;
 
         this.setDimensions();
         this.replaceElement();
         this.initializeVisualisation();
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
-        _.bindAll(this, "zoomRedraw", "resizeMap");
+        _.bindAll(this, "zoomRedraw", "resizeMap", "appendRouter");
 
         this.listenTo(this.world, "sync", this.drawMap);
+        this.listenTo(this.routers, "sync", this.drawRouters);
         d3.select(window).on("resize", this.resizeMap);
     },
 
@@ -119,6 +121,18 @@ var MapView = Marionette.ItemView.extend({
                   .on("zoom.redraw", this.zoomRedraw));
     },
 
+    drawRouters: function() {
+        this.routers.data.forEach(this.appendRouter);
+    },
+
+    appendRouter: function(d) {
+        this.svg.append("path")
+            .datum({type: "Point", coordinates: [d.lng, d.lat]})
+            .attr("d", this.path.pointRadius(5))
+            .attr("fill", "red")
+            .attr("stroke", "blue");
+    },
+
     zoomRedraw: function() {
         if (d3.event.sourceEvent.preventDefault) {
             d3.event.sourceEvent.preventDefault();
@@ -140,6 +154,7 @@ var MapView = Marionette.ItemView.extend({
         this.initializeVisualisation();
         this.initMap();
         this.drawMap();
+        this.drawRouters();
     },
 
     onMouseGrab: function() {
