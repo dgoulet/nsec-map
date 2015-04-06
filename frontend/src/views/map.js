@@ -21,6 +21,7 @@ var MapView = Marionette.ItemView.extend({
 
     zoomMin: 0.7,
     zoomMax: 5,
+    circleRadius: 5,
 
     initialize: function(options) {
         options = options || {};
@@ -34,7 +35,8 @@ var MapView = Marionette.ItemView.extend({
         this.initializeVisualisation();
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
-        _.bindAll(this, "zoomRedraw", "resizeMap", "appendRouter");
+        _.bindAll(this, "zoomRedraw", "resizeMap", "appendRouter",
+                  "getRouterFill");
 
         this.listenTo(this.world, "sync", this.drawMap);
         this.listenTo(this.routers, "sync", this.drawRouters);
@@ -127,10 +129,10 @@ var MapView = Marionette.ItemView.extend({
 
     appendRouter: function(d) {
         this.svg.append("path")
-            .datum({type: "Point", coordinates: [d.lng, d.lat]})
-            .attr("d", this.path.pointRadius(5))
-            .attr("fill", "red")
-            .attr("stroke", "blue");
+            .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
+            .attr("class", "router")
+            .attr("d", this.path.pointRadius(this.circleRadius))
+            .attr("fill", this.getRouterFill);
     },
 
     zoomRedraw: function() {
@@ -191,6 +193,15 @@ var MapView = Marionette.ItemView.extend({
 
     getHeight: function() {
         return parseInt(d3.select(this.selector).style("height"));
+    },
+
+    getRouterFill: function(d) {
+        tier = d.data.tier
+        if(tier === 0) return "chartreuse";
+        if(tier === 1) return "red";
+        if(tier === 2) return "orange";
+        if(tier === 3) return "yellow";
+        console.error("Invalid router tier:" + tier);
     }
 });
 

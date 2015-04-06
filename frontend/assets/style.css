@@ -42,3 +42,9 @@
     stroke: #fff;
     stroke-width: .5px;
 }
+
+.router {
+    stroke: #fff;
+    stroke-width: 2px;
+    stroke-opacity: .5;
+}
