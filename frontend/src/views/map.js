@@ -156,6 +156,7 @@ var MapView = Marionette.ItemView.extend({
             .attr("fill", this.getRouterFill)
             .on("mouseover", this.handleRouterMouseover)
             .on("mouseout", this.handleRouterMouseout)
+            .on("mousedown.grab", this.onMouseGrab)
             .call(this.geoZoomFunction);
     },
 
@@ -178,6 +179,7 @@ var MapView = Marionette.ItemView.extend({
             .datum(link)
             .attr("d", this.path)
             .attr("class", "link grabbable")
+            .on("mousedown.grab", this.onMouseGrab)
             .call(this.geoZoomFunction);
     },
 
