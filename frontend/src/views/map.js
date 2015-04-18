@@ -75,8 +75,8 @@ var MapView = Marionette.ItemView.extend({
 
         this.geoZoomFunction = d3.geo.zoom()
             .projection(this.projection)
-            .scaleExtent([this.projection.scale() * this.zoomMin,
-                          this.projection.scale() * this.zoomMax])
+            .scaleExtent([this.scale * this.zoomMin,
+                          this.scale * this.zoomMax])
             .on("zoom.redraw", _.bind(this.zoomRedraw, this));
 
         this.path = d3.geo.path()
