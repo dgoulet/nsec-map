@@ -6,7 +6,8 @@ var $ = require("jquery"),
     // This isn't a proper module, so don't use the geoZoom directly
     // as if it were. Instead, requiring the file will add the
     // d3.geo.zoom function to the existing d3 object
-    geoZoom = require("../utils/d3.geo.zoom");
+    geoZoom = require("../utils/d3.geo.zoom"),
+    RouterTooltipView = require("./routerTooltip");
 
 var MapView = Marionette.ItemView.extend({
     template: false,
@@ -33,6 +34,7 @@ var MapView = Marionette.ItemView.extend({
         this.world = options.worldData;
         this.routers = options.routersData;
         this.links = options.linksData;
+        this.tooltip = new RouterTooltipView();
 
         this.setDimensions();
         this.replaceElement();
@@ -40,7 +42,8 @@ var MapView = Marionette.ItemView.extend({
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
         _.bindAll(this, "zoomRedraw", "resizeMap", "appendRouter",
-                  "appendLink", "getRouterFill");
+                  "appendLink", "getRouterFill", "handleRouterMouseover",
+                 "handleRouterMouseout");
 
         this.listenTo(this.world, "sync", this.drawMap);
         this.listenTo(this.routers, "sync", this.handleSync);
@@ -151,6 +154,8 @@ var MapView = Marionette.ItemView.extend({
             .attr("class", "router grabbable")
             .attr("d", this.path.pointRadius(this.circleRadius))
             .attr("fill", this.getRouterFill)
+            .on("mouseover", this.handleRouterMouseover)
+            .on("mouseout", this.handleRouterMouseout)
             .call(this.geoZoomFunction);
     },
 
@@ -244,6 +249,14 @@ var MapView = Marionette.ItemView.extend({
         if(tier === 2) return "orange";
         if(tier === 3) return "yellow";
         console.error("Invalid router tier:" + tier);
+    },
+
+    handleRouterMouseover: function(d) {
+        this.tooltip.show(d.data);
+    },
+
+    handleRouterMouseout: function(d) {
+        this.tooltip.hide()
     }
 });
 

@@ -54,3 +54,15 @@
     stroke: aqua;
     stroke-width: 2px;
 }
+
+div.tooltip {
+    font-family: monospace;
+    position: absolute;
+    text-align: center;
+    display: block;
+    overflow: auto;
+    padding: 2px;
+    background: white;
+    border: 1px solid black;
+    pointer-events: none;
+}
