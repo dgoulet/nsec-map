@@ -70,6 +70,12 @@ var MapView = Marionette.ItemView.extend({
             this.projection.translate([this.width / 2, this.height / 2]);
         }
 
+        this.geoZoomFunction = d3.geo.zoom()
+            .projection(this.projection)
+            .scaleExtent([this.projection.scale() * this.zoomMin,
+                          this.projection.scale() * this.zoomMax])
+            .on("zoom.redraw", _.bind(this.zoomRedraw, this));
+
         this.path = d3.geo.path()
             .projection(this.projection);
 
@@ -128,11 +134,7 @@ var MapView = Marionette.ItemView.extend({
 
         // Allow zoom and rotation of map
         this.svg.selectAll("path")
-            .call(d3.geo.zoom()
-                  .projection(this.projection)
-                  .scaleExtent([this.projection.scale() * this.zoomMin,
-                                this.projection.scale() * this.zoomMax])
-                  .on("zoom.redraw", this.zoomRedraw));
+            .call(this.geoZoomFunction);
     },
 
     drawRouters: function() {
@@ -148,7 +150,8 @@ var MapView = Marionette.ItemView.extend({
             .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
             .attr("class", "router grabbable")
             .attr("d", this.path.pointRadius(this.circleRadius))
-            .attr("fill", this.getRouterFill);
+            .attr("fill", this.getRouterFill)
+            .call(this.geoZoomFunction);
     },
 
     appendLink: function(d) {
@@ -170,7 +173,7 @@ var MapView = Marionette.ItemView.extend({
             .datum(link)
             .attr("d", this.path)
             .attr("class", "link grabbable")
-            .on("mousewheel.zoom", this.dispatchZoom);
+            .call(this.geoZoomFunction);
     },
 
     zoomRedraw: function() {
