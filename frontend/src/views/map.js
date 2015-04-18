@@ -20,7 +20,10 @@ var MapView = Marionette.ItemView.extend({
     },
 
     zoomMin: 0.7,
-    zoomMax: 5,
+    zoomMax: 10,
+    scale: 250,
+    clipAngle: 90,
+    precision: 0.1,
     circleRadius: 5,
 
     initialize: function(options) {
@@ -59,10 +62,10 @@ var MapView = Marionette.ItemView.extend({
     initializeVisualisation: function() {
         if(!this.projection) {
             this.projection = d3.geo.orthographic()
-                .scale(250)
+                .scale(this.scale)
                 .translate([this.width / 2, this.height / 2])
-                .clipAngle(90)
-                .precision(0.1);
+                .clipAngle(this.clipAngle)
+                .precision(this.precision);
         } else {
             this.projection.translate([this.width / 2, this.height / 2]);
         }
