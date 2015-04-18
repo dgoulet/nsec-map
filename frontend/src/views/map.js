@@ -198,6 +198,7 @@ var MapView = Marionette.ItemView.extend({
         this.initMap();
         this.drawMap();
         this.drawRouters();
+        this.drawLinks();
     },
 
     onMouseGrab: function() {
