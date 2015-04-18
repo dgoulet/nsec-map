@@ -238,7 +238,7 @@ var MapView = Marionette.ItemView.extend({
     },
 
     getRouterFill: function(d) {
-        tier = d.data.tier
+        tier = d.data.tier;
         if(tier === 0) return "chartreuse";
         if(tier === 1) return "red";
         if(tier === 2) return "orange";
