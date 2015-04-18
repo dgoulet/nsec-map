@@ -48,3 +48,9 @@
     stroke-width: 2px;
     stroke-opacity: .5;
 }
+
+.link {
+    fill: none;
+    stroke: aqua;
+    stroke-width: 2px;
+}

@@ -29,6 +29,7 @@ var MapView = Marionette.ItemView.extend({
         this.selector = options.selector || ".map";
         this.world = options.worldData;
         this.routers = options.routersData;
+        this.links = options.linksData;
 
         this.setDimensions();
         this.replaceElement();
@@ -36,15 +37,23 @@ var MapView = Marionette.ItemView.extend({
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
         _.bindAll(this, "zoomRedraw", "resizeMap", "appendRouter",
-                  "getRouterFill");
+                  "appendLink", "getRouterFill");
 
         this.listenTo(this.world, "sync", this.drawMap);
-        this.listenTo(this.routers, "sync", this.drawRouters);
+        this.listenTo(this.routers, "sync", this.handleSync);
+        this.listenTo(this.links, "sync", this.handleSync);
         d3.select(window).on("resize", this.resizeMap);
     },
 
     onRender: function() {
         this.initMap();
+    },
+
+    handleSync: function() {
+        if(this.routers.data && this.links.data) {
+            this.drawLinks();
+            this.drawRouters();
+        }
     },
 
     initializeVisualisation: function() {
@@ -127,12 +136,38 @@ var MapView = Marionette.ItemView.extend({
         this.routers.data.forEach(this.appendRouter);
     },
 
+    drawLinks: function() {
+        this.links.data.forEach(this.appendLink);
+    },
+
     appendRouter: function(d) {
         this.svg.append("path")
             .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
-            .attr("class", "router")
+            .attr("class", "router grabbable")
             .attr("d", this.path.pointRadius(this.circleRadius))
             .attr("fill", this.getRouterFill);
+    },
+
+    appendLink: function(d) {
+        var leftPos = this.routers.coordinatesByLxcName[d.left];
+        var rightPos = this.routers.coordinatesByLxcName[d.right];
+
+        if(!leftPos || !rightPos) {
+            // Invalid/unknown LXC name, no coordinates returned
+            return;
+        }
+
+        var link = {
+            type: "LineString",
+            coordinates: [[leftPos.lng, leftPos.lat],
+                          [rightPos.lng, rightPos.lat]]
+        };
+
+        this.svg.append("path")
+            .datum(link)
+            .attr("d", this.path)
+            .attr("class", "link grabbable")
+            .on("mousewheel.zoom", this.dispatchZoom);
     },
 
     zoomRedraw: function() {

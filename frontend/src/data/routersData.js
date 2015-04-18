@@ -6,6 +6,7 @@ var RoutersData = Marionette.Object.extend({
     url: "/assets/internet/Telco.csv",
 
     initialize: function(options) {
+        this.coordinatesByLxcName = {};
         _.bindAll(this, "onSync", "parseRow");
     },
 
@@ -28,6 +29,13 @@ var RoutersData = Marionette.Object.extend({
         router.asn = +d["ASN"];
         router.lng = +coordinates[1];
         router.lat = +coordinates[0];
+
+        // Used get coordinates of links, whose ends are given by
+        // Lxc-name of the node
+        this.coordinatesByLxcName[d["Lxc-name"]] = {
+            lng: +coordinates[1],
+            lat: +coordinates[0]
+        };
 
         return router;
     },

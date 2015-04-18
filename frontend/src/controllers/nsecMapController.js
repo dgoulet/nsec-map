@@ -3,6 +3,7 @@ var Backbone = require("backbone"),
     // Data
     WorldData = require("../data/worldData"),
     RoutersData = require("../data/routersData"),
+    LinksData = require("../data/linksData"),
     // Views
     MapView = require("../views/map");
 
@@ -18,14 +19,17 @@ var NsecMapController = Marionette.Controller.extend({
     showMap: function() {
         this.worldData = new WorldData();
         this.routersData = new RoutersData();
+        this.linksData = new LinksData();
 
         NsecMap.map.show(new MapView({
             worldData: this.worldData,
-            routersData: this.routersData
+            routersData: this.routersData,
+            linksData: this.linksData
         }));
 
         this.worldData.fetch();
         this.routersData.fetch();
+        this.linksData.fetch();
     }
 });
 
