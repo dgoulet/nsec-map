@@ -26,6 +26,7 @@ var MapView = Marionette.ItemView.extend({
     clipAngle: 90,
     precision: 0.1,
     circleRadius: 5,
+    velocity: 0.005,
 
     initialize: function(options) {
         options = options || {};
@@ -35,20 +36,24 @@ var MapView = Marionette.ItemView.extend({
         this.routers = options.routersData;
         this.links = options.linksData;
         this.tooltip = new RouterTooltipView();
+        this.initDate = Date.now();
+        // Sorry about the global
+        window.mapGrabbed = false;
 
         this.setDimensions();
         this.replaceElement();
         this.initializeVisualisation();
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
-        _.bindAll(this, "zoomRedraw", "resizeMap", "appendRouter",
+        _.bindAll(this, "redrawMap", "resizeMap", "appendRouter",
                   "appendLink", "getRouterFill", "handleRouterMouseover",
-                 "handleRouterMouseout");
+                  "handleRouterMouseout", "rotateMap");
 
         this.listenTo(this.world, "sync", this.drawMap);
         this.listenTo(this.routers, "sync", this.handleSync);
         this.listenTo(this.links, "sync", this.handleSync);
         d3.select(window).on("resize", this.resizeMap);
+        d3.timer(this.rotateMap);
     },
 
     onRender: function() {
@@ -77,7 +82,7 @@ var MapView = Marionette.ItemView.extend({
             .projection(this.projection)
             .scaleExtent([this.scale * this.zoomMin,
                           this.scale * this.zoomMax])
-            .on("zoom.redraw", _.bind(this.zoomRedraw, this));
+            .on("zoom.redraw", _.bind(this.redrawMap, this));
 
         this.path = d3.geo.path()
             .projection(this.projection);
@@ -183,8 +188,10 @@ var MapView = Marionette.ItemView.extend({
             .call(this.geoZoomFunction);
     },
 
-    zoomRedraw: function() {
-        if (d3.event.sourceEvent.preventDefault) {
+    redrawMap: function() {
+        if(!this.svgWidth || !this.world.data) return;
+
+        if (d3.event && d3.event.sourceEvent.preventDefault) {
             d3.event.sourceEvent.preventDefault();
         }
 
@@ -208,7 +215,21 @@ var MapView = Marionette.ItemView.extend({
         this.drawRouters();
     },
 
+    rotateMap: function() {
+        // End the animation as soon as the user grabs the map
+        if(window.mapGrabbed) return true;
+
+        var angle = this.velocity * (Date.now() - this.initDate);
+        var rotate = [angle, 0, 0];
+        this.projection.rotate(rotate);
+        this.redrawMap();
+    },
+
     onMouseGrab: function() {
+        if(!window.mapGrabbed) {
+            window.mapGrabbed = true;
+        }
+
         var path = d3.select(this).classed("grabbed", true);
         var w = d3.select(window)
             .on("mouseup.grab." + this.classList,
@@ -258,7 +279,7 @@ var MapView = Marionette.ItemView.extend({
     },
 
     handleRouterMouseout: function(d) {
-        this.tooltip.hide()
+        this.tooltip.hide();
     }
 });
 
