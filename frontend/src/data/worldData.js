@@ -3,7 +3,7 @@ var _ = require("underscore"),
     Marionette = require("backbone.marionette");
 
 var WorldData = Marionette.Object.extend({
-    url: "/assets/topo/world-countries.json",
+    url: "./assets/topo/world-countries.json",
 
     initialize: function(options) {
         _.bindAll(this, "onSync");

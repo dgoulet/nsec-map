@@ -3,7 +3,7 @@ var _ = require("underscore"),
     Marionette = require("backbone.marionette");
 
 var LinksData = Marionette.Object.extend({
-    url: "/assets/internet/Links.csv",
+    url: "./assets/internet/Links.csv",
 
     initialize: function(options) {
         _.bindAll(this, "onSync", "parseRow");

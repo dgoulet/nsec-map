@@ -3,7 +3,7 @@ var _ = require("underscore"),
     Marionette = require("backbone.marionette");
 
 var TelcoData = Marionette.Object.extend({
-    url: "/assets/internet/Telco.csv",
+    url: "./assets/internet/Telco.csv",
 
     initialize: function(options) {
         this.coordinatesByLxcName = {};
