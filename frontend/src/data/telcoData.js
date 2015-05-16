@@ -2,8 +2,8 @@ var _ = require("underscore"),
     d3 = require("d3"),
     Marionette = require("backbone.marionette");
 
-var RoutersData = Marionette.Object.extend({
-    url: "/assets/internet/Routers.csv",
+var TelcoData = Marionette.Object.extend({
+    url: "/assets/internet/Telco.csv",
 
     initialize: function(options) {
         this.coordinatesByLxcName = {};
@@ -23,8 +23,10 @@ var RoutersData = Marionette.Object.extend({
         var coordinates = d["GPS (Long/Lat)"].split("/");
 
         router.name = d["Name"];
-        router.country = d["Country"];
+        router.fqdn = d["FQDN"];
         router.containerName = d["Lxc-name"];
+        router.tier = +d["Tier"];
+        router.asn = +d["ASN"];
         router.lng = +coordinates[1];
         router.lat = +coordinates[0];
 
@@ -46,4 +48,4 @@ var RoutersData = Marionette.Object.extend({
     }
 });
 
-module.exports = RoutersData;
+module.exports = TelcoData;

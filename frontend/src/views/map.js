@@ -34,6 +34,7 @@ var MapView = Marionette.ItemView.extend({
         this.selector = options.selector || ".map";
         this.world = options.worldData;
         this.routers = options.routersData;
+        this.telco = options.telcoData;
         this.links = options.linksData;
         this.tooltip = new RouterTooltipView();
         this.initDate = Date.now();
@@ -45,12 +46,14 @@ var MapView = Marionette.ItemView.extend({
         this.initializeVisualisation();
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
-        _.bindAll(this, "redrawMap", "resizeMap", "appendRouter",
+        _.bindAll(this,
+                  "redrawMap", "resizeMap", "appendRouter", "appendTelco",
                   "appendLink", "getRouterFill", "handleRouterMouseover",
                   "handleRouterMouseout", "rotateMap");
 
         this.listenTo(this.world, "sync", this.drawMap);
         this.listenTo(this.routers, "sync", this.handleSync);
+        this.listenTo(this.telco, "sync", this.handleSync);
         this.listenTo(this.links, "sync", this.handleSync);
         d3.select(window).on("resize", this.resizeMap);
         d3.timer(this.rotateMap);
@@ -61,9 +64,10 @@ var MapView = Marionette.ItemView.extend({
     },
 
     handleSync: function() {
-        if(this.routers.data && this.links.data) {
+        if(this.routers.data && this.telco.data && this.links.data) {
             this.drawLinks();
             this.drawRouters();
+            this.drawTelco();
         }
     },
 
@@ -149,11 +153,27 @@ var MapView = Marionette.ItemView.extend({
         this.routers.data.forEach(this.appendRouter);
     },
 
+    drawTelco: function() {
+        this.telco.data.forEach(this.appendTelco);
+    },
+
     drawLinks: function() {
         this.links.data.forEach(this.appendLink);
     },
 
     appendRouter: function(d) {
+        this.svg.append("path")
+            .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
+            .attr("class", "router grabbable")
+            .attr("d", this.path.pointRadius(this.circleRadius))
+            .attr("fill", "chartreuse")
+            .on("mouseover", this.handleRouterMouseover)
+            .on("mouseout", this.handleRouterMouseout)
+            .on("mousedown.grab", this.onMouseGrab)
+            .call(this.geoZoomFunction);
+    },
+
+    appendTelco: function(d) {
         this.svg.append("path")
             .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
             .attr("class", "router grabbable")
@@ -166,11 +186,12 @@ var MapView = Marionette.ItemView.extend({
     },
 
     appendLink: function(d) {
-        var leftPos = this.routers.coordinatesByLxcName[d.left];
-        var rightPos = this.routers.coordinatesByLxcName[d.right];
+        var leftPos = this.telco.coordinatesByLxcName[d.left] ||
+            this.routers.coordinatesByLxcName[d.left];
+        var rightPos = this.telco.coordinatesByLxcName[d.right] ||
+            this.routers.coordinatesByLxcName[d.right];
 
         if(!leftPos || !rightPos) {
-            // Invalid/unknown LXC name, no coordinates returned
             return;
         }
 
@@ -213,6 +234,7 @@ var MapView = Marionette.ItemView.extend({
         this.drawMap();
         this.drawLinks();
         this.drawRouters();
+        this.drawTelco();
     },
 
     rotateMap: function() {

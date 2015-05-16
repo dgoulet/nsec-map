@@ -20,7 +20,6 @@ var LinksData = Marionette.Object.extend({
 
         link.left = d["Left"];
         link.right = d["Right"];
-        link.speed = +d["Speed"];
 
         return link;
     },
