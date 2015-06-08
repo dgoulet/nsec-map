@@ -10,7 +10,7 @@ Grunt, which can be installed via node's package manager, `npm`:
     # npm install -g grunt-cli
 
 Once this is done, navigate to `frontend` and run `npm install` to
-automatically download and install (locally the the directory) all the
+automatically download and install (locally to the directory) all the
 javascript dependencies. You can now run an instance of the map by
 executing `grunt run`, from the same directory. The map can now be
 accessed at `localhost:4000`. If needed, the port can be changed in
