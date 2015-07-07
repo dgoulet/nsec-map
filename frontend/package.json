@@ -1,7 +1,7 @@
 {
-  "name": "nsecmap",
+  "name": "tormap",
   "version": "0.1.0",
-  "description": "Map of the Internet for NorthSec",
+  "description": "Map of the Tor network",
   "author": "Antoine Busque",
   "private": "true",
   "devDependencies": {

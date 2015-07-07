@@ -1,7 +1,7 @@
 var Marionette = require("backbone.marionette"),
     d3 = require("d3");
 
-var RouterTooltipView = Marionette.Object.extend({
+var RelaysTooltipView = Marionette.Object.extend({
     xOffset: 15,
     yOffset: -28,
 
@@ -21,11 +21,7 @@ var RouterTooltipView = Marionette.Object.extend({
             .duration(200)
             .style("opacity", 1);
 
-        if(!options.tier) {
-            html = this.getRouterHtml(options);
-        } else {
-            html = this.getTelcoHtml(options);
-        }
+		html = this.getRelaysHtml(options);
 
         this.tooltip.html(html)
             .style("left", (d3.event.pageX + this.xOffset) + "px")
@@ -38,24 +34,16 @@ var RouterTooltipView = Marionette.Object.extend({
             .style("opacity", 0);
     },
 
-    getRouterHtml: function(data) {
+    getRelaysHtml: function(data) {
         var br = "<br/>";
 
         var html = data.name + br +
-            data.country;
-
-        return html;
-    },
-
-    getTelcoHtml: function(data) {
-        var br = "<br/>";
-
-        var html = data.fqdn + br +
-            "Tier " + data.tier + br +
-            "AS " + data.asn;
+            "Fingerprint: " + data.fingerprint + br +
+			data.ip + ":" + data.orport + br +
+            "Observed BW " + data.observed_bw + " MB/s"
 
         return html;
     }
 });
 
-module.exports = RouterTooltipView;
+module.exports = RelaysTooltipView;

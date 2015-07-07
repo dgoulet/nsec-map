@@ -1,17 +1,17 @@
 var Backbone = require("backbone"),
-    NsecMap = require("./nsecMap"),
+    TorMap = require("./torMap"),
     // Controllers
-    NsecMapController = require("./controllers/nsecMapController");
+    TorMapController = require("./controllers/torMapController");
 
-NsecMap.addInitializer(function () {
-    window.NsecMap = this;
+TorMap.addInitializer(function () {
+    window.TorMap = this;
 });
 
 // Controllers initializers
-NsecMap.addInitializer(function() {
-    var nsecMapController = new NsecMapController();
-    NsecMap.nsecMapController = nsecMapController;
-    NsecMap.nsecMapController.start();
+TorMap.addInitializer(function() {
+    var torMapController = new TorMapController();
+    TorMap.torMapController = torMapController;
+    TorMap.torMapController.start();
 });
 
-NsecMap.start();
+TorMap.start();

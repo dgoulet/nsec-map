@@ -16,14 +16,6 @@
     height: 85vh;
 }
 
-.openface {
-    margin-left: auto;
-    margin-right: auto;
-    width: 20%;
-    display: block;
-    margin-top: -3%;
-}
-
 .stroke {
     fill: none;
     stroke: #000;
@@ -53,7 +45,7 @@
 
 .router {
     stroke: #fff;
-    stroke-width: 2px;
+    stroke-width: 0px;
     stroke-opacity: .5;
 }
 

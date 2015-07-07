@@ -2,11 +2,10 @@ var _ = require("underscore"),
     d3 = require("d3"),
     Marionette = require("backbone.marionette");
 
-var RoutersData = Marionette.Object.extend({
-    url: "./assets/internet/Routers.csv",
+var RelaysData = Marionette.Object.extend({
+    url: "./assets/internet/Relays.csv",
 
     initialize: function(options) {
-        this.coordinatesByLxcName = {};
         _.bindAll(this, "onSync", "parseRow");
     },
 
@@ -17,25 +16,21 @@ var RoutersData = Marionette.Object.extend({
     },
 
     parseRow: function(d) {
-        var router = {};
+        var relay = {};
         // The headers for the current CSV files say that the format
         // is long/lat, but it is actually lat/long
         var coordinates = d["GPS (Long/Lat)"].split("/");
 
-        router.name = d["Name"];
-        router.country = d["Country"];
-        router.containerName = d["Lxc-name"];
-        router.lng = +coordinates[1];
-        router.lat = +coordinates[0];
+        relay.name = d["Name"];
+        relay.fingerprint = d["Fingerprint"];
+        relay.as = d["AS"];
+		relay.ip = d["IP"];
+		relay.orport = d["OrPort"];
+		relay.observed_bw = d["ObservedBW"];
+        relay.lng = +coordinates[1];
+        relay.lat = +coordinates[0];
 
-        // Used get coordinates of links, whose ends are given by
-        // Lxc-name of the node
-        this.coordinatesByLxcName[d["Lxc-name"]] = {
-            lng: +coordinates[1],
-            lat: +coordinates[0]
-        };
-
-        return router;
+        return relay;
     },
 
     onSync: function(error, data) {
@@ -46,4 +41,4 @@ var RoutersData = Marionette.Object.extend({
     }
 });
 
-module.exports = RoutersData;
+module.exports = RelaysData;

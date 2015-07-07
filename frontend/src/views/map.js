@@ -7,7 +7,7 @@ var $ = require("jquery"),
     // as if it were. Instead, requiring the file will add the
     // d3.geo.zoom function to the existing d3 object
     geoZoom = require("../utils/d3.geo.zoom"),
-    RouterTooltipView = require("./routerTooltip");
+    RelaysTooltipView = require("./relaysTooltip");
 
 var MapView = Marionette.ItemView.extend({
     template: false,
@@ -21,11 +21,11 @@ var MapView = Marionette.ItemView.extend({
     },
 
     zoomMin: 0.7,
-    zoomMax: 10,
+    zoomMax: 15,
     scale: 250,
     clipAngle: 90,
     precision: 0.1,
-    circleRadius: 5,
+    circleRadius: 2,
     velocity: 0.005,
 
     initialize: function(options) {
@@ -33,10 +33,8 @@ var MapView = Marionette.ItemView.extend({
         this.margin = options.margin || this.margin;
         this.selector = options.selector || ".map";
         this.world = options.worldData;
-        this.routers = options.routersData;
-        this.telco = options.telcoData;
-        this.links = options.linksData;
-        this.tooltip = new RouterTooltipView();
+        this.relays = options.relaysData;
+        this.tooltip = new RelaysTooltipView();
         this.initDate = Date.now();
         // Sorry about the global
         window.mapGrabbed = false;
@@ -47,14 +45,12 @@ var MapView = Marionette.ItemView.extend({
 
         this.resizeMap = _.debounce(this.resizeMap, 250);
         _.bindAll(this,
-                  "redrawMap", "resizeMap", "appendRouter", "appendTelco",
-                  "appendLink", "getRouterFill", "handleRouterMouseover",
-                  "handleRouterMouseout", "rotateMap");
+                  "redrawMap", "resizeMap", "appendRelay",
+                  "getRelayFill", "handleRelayMouseover",
+                  "handleRelayMouseout", "rotateMap");
 
         this.listenTo(this.world, "sync", this.drawMap);
-        this.listenTo(this.routers, "sync", this.handleSync);
-        this.listenTo(this.telco, "sync", this.handleSync);
-        this.listenTo(this.links, "sync", this.handleSync);
+        this.listenTo(this.relays, "sync", this.handleSync);
         d3.select(window).on("resize", this.resizeMap);
         d3.timer(this.rotateMap);
     },
@@ -64,10 +60,8 @@ var MapView = Marionette.ItemView.extend({
     },
 
     handleSync: function() {
-        if(this.routers.data && this.telco.data && this.links.data) {
-            this.drawLinks();
-            this.drawRouters();
-            this.drawTelco();
+        if(this.relays.data) {
+            this.drawRelays();
         }
     },
 
@@ -149,62 +143,27 @@ var MapView = Marionette.ItemView.extend({
             .call(this.geoZoomFunction);
     },
 
-    drawRouters: function() {
-        this.routers.data.forEach(this.appendRouter);
+    drawRelays: function() {
+        this.relays.data.forEach(this.appendRelay);
     },
 
-    drawTelco: function() {
-        this.telco.data.forEach(this.appendTelco);
-    },
-
-    drawLinks: function() {
-        this.links.data.forEach(this.appendLink);
-    },
-
-    appendRouter: function(d) {
+    appendRelay: function(d) {
+		var bw = d.observed_bw;
+		var radius = 2;
+		if(bw <= 1.0) {
+			radius = 1;
+		} else if (bw >= 10.0) {
+			radius = 5;
+		}
+		pathFunc = this.path.pointRadius(radius);
         this.svg.append("path")
             .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
-            .attr("class", "router grabbable")
-            .attr("d", this.path.pointRadius(this.circleRadius))
-            .attr("fill", "chartreuse")
-            .on("mouseover", this.handleRouterMouseover)
-            .on("mouseout", this.handleRouterMouseout)
-            .on("mousedown.grab", this.onMouseGrab)
-            .call(this.geoZoomFunction);
-    },
-
-    appendTelco: function(d) {
-        this.svg.append("path")
-            .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
-            .attr("class", "router grabbable")
-            .attr("d", this.path.pointRadius(this.circleRadius))
-            .attr("fill", this.getRouterFill)
-            .on("mouseover", this.handleRouterMouseover)
-            .on("mouseout", this.handleRouterMouseout)
-            .on("mousedown.grab", this.onMouseGrab)
-            .call(this.geoZoomFunction);
-    },
-
-    appendLink: function(d) {
-        var leftPos = this.telco.coordinatesByLxcName[d.left] ||
-            this.routers.coordinatesByLxcName[d.left];
-        var rightPos = this.telco.coordinatesByLxcName[d.right] ||
-            this.routers.coordinatesByLxcName[d.right];
-
-        if(!leftPos || !rightPos) {
-            return;
-        }
-
-        var link = {
-            type: "LineString",
-            coordinates: [[leftPos.lng, leftPos.lat],
-                          [rightPos.lng, rightPos.lat]]
-        };
-
-        this.svg.append("path")
-            .datum(link)
-            .attr("d", this.path)
-            .attr("class", "link grabbable")
+            .attr("class", "relay grabbable")
+            //.attr("d", this.path.pointRadius(radius))
+			.attr("d", pathFunc)
+            .attr("fill", this.getRelayFill)
+            .on("mouseover", this.handleRelayMouseover)
+            .on("mouseout", this.handleRelayMouseout)
             .on("mousedown.grab", this.onMouseGrab)
             .call(this.geoZoomFunction);
     },
@@ -232,9 +191,7 @@ var MapView = Marionette.ItemView.extend({
         this.initializeVisualisation();
         this.initMap();
         this.drawMap();
-        this.drawLinks();
-        this.drawRouters();
-        this.drawTelco();
+        this.drawRelays();
     },
 
     rotateMap: function() {
@@ -287,20 +244,23 @@ var MapView = Marionette.ItemView.extend({
         return parseInt(d3.select(this.selector).style("height"));
     },
 
-    getRouterFill: function(d) {
-        tier = d.data.tier;
-        if(tier === 0) return "Chartreuse";
-        if(tier === 1) return "Crimson";
-        if(tier === 2) return "DarkOrange";
-        if(tier === 3) return "Gold";
-        console.error("Invalid router tier:" + tier);
+    getRelayFill: function(d) {
+		var bw = d.data.observed_bw;
+		// Change color based on observed BW.
+		if(bw <= 1.0) {
+			return "DarkOrange";
+		} else if (bw >= 10.0) {
+			return "Blue";
+		} else {
+			return "LightGreen";
+		}
     },
 
-    handleRouterMouseover: function(d) {
+    handleRelayMouseover: function(d) {
         this.tooltip.show(d.data);
     },
 
-    handleRouterMouseout: function(d) {
+    handleRelayMouseout: function(d) {
         this.tooltip.hide();
     }
 });
