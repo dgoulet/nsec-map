@@ -147,20 +147,23 @@ var MapView = Marionette.ItemView.extend({
         this.relays.data.forEach(this.appendRelay);
     },
 
-    appendRelay: function(d) {
-		var bw = d.observed_bw;
-		var radius = 2;
+	getRadius: function(d) {
+		if (d.type !== "Point") return;
+		var radius = 3;
+		var bw = d.data.observed_bw;
 		if(bw <= 1.0) {
-			radius = 1;
+			radius = 2;
 		} else if (bw >= 10.0) {
-			radius = 5;
+			radius = 4;
 		}
-		pathFunc = this.path.pointRadius(radius);
+		return radius;
+	},
+
+    appendRelay: function(d) {
         this.svg.append("path")
             .datum({type: "Point", coordinates: [d.lng, d.lat], data: d})
             .attr("class", "relay grabbable")
-            //.attr("d", this.path.pointRadius(radius))
-			.attr("d", pathFunc)
+			.attr("d", this.path.pointRadius(this.getRadius))
             .attr("fill", this.getRelayFill)
             .on("mouseover", this.handleRelayMouseover)
             .on("mouseout", this.handleRelayMouseout)
